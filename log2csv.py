@@ -16,7 +16,7 @@ for i, line in enumerate(log_lines):
     # timestamp, id, and 8 bytes of data all converted to decimal
     log_lines[i] = [float(separated_line[0][1:-1]), int(id, 16)] + bytes
 
-# creates 'time_interval' and 'same_id_time_interval' columns, removing timestamp
+# creates 'time_interval' and 'same_id_time_interval' columns
 last_timestamps = {}
 for i in range(1, len(log_lines)):
     if i != 0: # time interval
@@ -31,6 +31,7 @@ for i in range(1, len(log_lines)):
     log_lines[i] += [label]
 log_lines[0] += [0, 0, label]
 
+# removes timestamp
 log_lines = [line[1:] for line in log_lines]
 
 # writes data in csv file 
