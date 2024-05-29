@@ -29,15 +29,15 @@ for i, line in enumerate(log_lines):
 last_timestamps = {}
 for i in range(1, len(log_lines)):
     if i != 0: # time interval
-        log_lines[i].append(log_lines[i][0] - log_lines[i-1][0])
+        log_lines[i].append(round(log_lines[i][0] - log_lines[i-1][0], 6))
         # same id time interval
-        if log_lines[i][1] not in last_timestamps.keys():
-            log_lines[i].append(0)
-            last_timestamps[log_lines[i][1]] = log_lines[i][0]
+        if log_lines[i][2] not in last_timestamps.keys():
+            log_lines[i].append(0.0)
+            last_timestamps[log_lines[i][2]] = log_lines[i][0]
         else:
-            log_lines[i].append(log_lines[i][0] - last_timestamps[log_lines[i][1]])
-            last_timestamps[log_lines[i][1]] = log_lines[i][0]
-log_lines[0] += [0, 0]
+            log_lines[i].append(round(log_lines[i][0] - last_timestamps[log_lines[i][2]], 6))
+            last_timestamps[log_lines[i][2]] = log_lines[i][0]
+log_lines[0] += [0.0, 0.0]
 
 # removes timestamp
 log_lines = [line[1:] for line in log_lines]
