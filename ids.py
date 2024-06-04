@@ -1,4 +1,6 @@
 import pickle
+import sys
+import curses
 import can
 import numpy as np
 import pandas as pd
@@ -7,10 +9,12 @@ import sklearn
 
 known_messages_tmps = {}
 last_message = can.Message()
+last_malign_messages = []
 
 # Configuração do barramento CAN
 bus = can.interface.Bus(interface="socketcan", channel="can0", bitrate=500000)
 
+# Carregamento do modelo e do scaler
 with open("./models/ocsvm-ids-scaler.pkl", "rb") as f:
     model, scaler = pickle.load(f)
 
@@ -18,7 +22,6 @@ with open("./models/ocsvm-ids-scaler.pkl", "rb") as f:
 # Função para classificar novas mensagens CAN
 def classify_can_message(formated_message):
     prediction = model.predict(formated_message)
-    print(prediction)
     return "benign" if prediction == 1 else "malicious"
 
 
@@ -53,33 +56,68 @@ def translate_message(message):
             "byte7",
         ],
     )
-    print(translated_message)
     # scaling
-    translated_message = scaler.transform(translated_message)
+    scaled_translated_message = scaler.transform(translated_message)
 
-    return translated_message
+    return scaled_translated_message, translated_message
 
+def main(stdscr):
+    global last_message
+    global known_messages_tmps
 
-# Monitoramento contínuo do barramento CAN
-first_iteration = True
-benign = 0
-malicious = 0
-while True:
-    if first_iteration:
-        first_iteration = False
-        continue
-    message = bus.recv()
+    curses.curs_set(0)  # Hide the cursor
+    stdscr.nodelay(1)  # Non-blocking input
 
-    translated_message = translate_message(message)
+    # Monitoramento contínuo do barramento CAN
+    first_iteration = True
+    benign = 0
+    malicious = 0
+    try:
+        while True:
+            if first_iteration:
+                first_iteration = False
+                continue
+            message = bus.recv()
 
-    result = classify_can_message(translated_message)
-    if result == "malicious":
-        malicious += 1
-    else:
-        benign += 1
+            scaled_translated_message , translated_message = translate_message(message)
 
-    
-        
-    print(f"Malicious count: {malicious} | Benign count: {benign}")
+            result = classify_can_message(scaled_translated_message)
+            if result == "malicious":
+                malicious += 1
+                if len(last_malign_messages) >= 3:
+                    last_malign_messages.pop(0)
+                    last_malign_messages.append(translated_message)
+            else:
+                benign += 1
 
-    last_message = message
+            # Clear screen
+            stdscr.clear()
+            
+            # Get screen height and width
+            height, width = stdscr.getmaxyx()
+            
+            # Create messages
+            header = f"CAN Intrusion Detection System"
+            scan = f"Scanning {bus.channel_info}"
+            msg = f"Malicious count: {malicious} | Benign count: {benign}"
+
+            # Calculate the center position
+            x = width // 2 - len(msg) // 2
+            y = height // 2
+            
+            # Add the message to the screen
+            stdscr.addstr(y - 4,width // 2 - len(header) // 2, header)
+            stdscr.addstr(y - 2,width // 2 - len(scan) // 2, scan)
+            stdscr.addstr(y, x, msg)
+            
+            # Refresh the screen
+            stdscr.refresh()
+
+            last_message = message
+    except KeyboardInterrupt:
+        print("Interrompendo análise IDS")
+        bus.shutdown()
+        sys.exit(0)
+
+if __name__ == "__main__":
+    curses.wrapper(main)
