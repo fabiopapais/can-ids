@@ -1,31 +1,33 @@
 import pickle
 import can
 import numpy as np
+import pandas as pd
+import os
 import sklearn
-
-# Configuração do barramento CAN
-bus = can.interface.Bus(interface='socketcan', channel='can0', bitrate=500000)
-
-with open("./models/ocsvm-ids.pkl", "rb") as f:
-    model, scaler = pickle.load(f)
-
-# Função para classificar novas mensagens CAN
-#def classify_can_message(message):
- #   X_test = np.array([[message.arbitration_id]])
-  #  prediction = ocsvm.predict(X_test) # Carregar o modelo com esse nome
-   # return 'benign' if prediction == 1 else 'malicious'
-
-# Função para registrar as saídas
-#def log_message(message, classification):
- #   with open('caminho', 'a') as log_file: # Adicionar caminho
-  #      log_file.write(f"{message.timestamp}, {message.arbitration_id}, {message.data}, {classification}\n")
 
 known_messages_tmps = {}
 last_message = can.Message()
+
+# Configuração do barramento CAN
+bus = can.interface.Bus(interface="socketcan", channel="can0", bitrate=500000)
+
+with open("./models/ocsvm-ids-scaler.pkl", "rb") as f:
+    model, scaler = pickle.load(f)
+
+
+# Função para classificar novas mensagens CAN
+def classify_can_message(formated_message):
+    prediction = model.predict(formated_message)
+    print(prediction)
+    return "benign" if prediction == 1 else "malicious"
+
+
 def translate_message(message):
-    decimal_data = decimal_values = [byte for byte in message.data]
+    # data payload convertion
+    decimal_data = [byte for byte in message.data]
     if len(decimal_data) < 8:
         decimal_data += [-1] * (8 - message.dlc)
+
     # time interval logic
     time_interval = 0.0
     same_id_time_interval = 0.0
@@ -35,21 +37,49 @@ def translate_message(message):
     else:
         known_messages_tmps[message.arbitration_id] = message.timestamp
     same_id_time_interval = message.timestamp - last_message.timestamp
+
     # converting to np array
-    translated_message = [message.arbitration_id] + decimal_data + [time_interval, same_id_time_interval]
-    return np.array(translated_message)
+    translated_message = pd.DataFrame(
+        [[message.arbitration_id] + decimal_data],
+        columns=[
+            "id",
+            "byte0",
+            "byte1",
+            "byte2",
+            "byte3",
+            "byte4",
+            "byte5",
+            "byte6",
+            "byte7",
+        ],
+    )
+    print(translated_message)
+    # scaling
+    translated_message = scaler.transform(translated_message)
+
+    return translated_message
+
+
 # Monitoramento contínuo do barramento CAN
 first_iteration = True
+benign = 0
+malicious = 0
 while True:
     if first_iteration:
         first_iteration = False
         continue
     message = bus.recv()
+
     translated_message = translate_message(message)
-    print(translated_message)
+
+    result = classify_can_message(translated_message)
+    if result == "malicious":
+        malicious += 1
+    else:
+        benign += 1
+
+    
+        
+    print(f"Malicious count: {malicious} | Benign count: {benign}")
+
     last_message = message
-    #print_listener = can.Printer()
-    #can.Notifier(bus, [print_listener])
-#    if message:
- #       classification = classify_can_message(message)
-  #      log_message(message, classification)
