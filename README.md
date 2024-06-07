@@ -21,3 +21,13 @@ Generates and formats candump's logfile to expected csv file while labelling dat
 python log2csv.py <logfile path> <label>
 ```
 *If the label is 'auto'*, log2csv will assume messages with extended id as malign and benign otherwise.
+
+### ids.py
+Monitores the can network 'can0' looking for malign messages with the desired model.
+```bash
+python ids.py <model path>
+```
+You can find a set of produced models at the /models folder. Each model was trained with a certain % amount of data, using or not "Time Interval" (TI) and "Same ID Time Interval" (SITI) variables. OBS.: to use NOTI or NOSITI models, you must change ids.py code accordingly.
+
+### OCSVM_for_anomaly_detection.ipynb
+Notebook detailing model development, as well as data separation.
