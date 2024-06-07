@@ -89,7 +89,8 @@ def main(stdscr):
                 malicious += 1
                 if len(last_malign_messages) >= 3:
                     last_malign_messages.pop(0)
-                    last_malign_messages.append(translated_message)
+                last_malign_messages.append(translated_message)
+                
             else:
                 benign += 1
 
@@ -109,9 +110,15 @@ def main(stdscr):
             y = height // 2
             
             # Add the message to the screen
-            stdscr.addstr(y - 4,width // 2 - len(header) // 2, header)
+            stdscr.addstr(y - 3,width // 2 - len(header) // 2, header)
             stdscr.addstr(y - 2,width // 2 - len(scan) // 2, scan)
             stdscr.addstr(y, x, msg)
+            stdscr.addstr(y + 2, x + 3, "Last 3 malign messages detected:")
+            for i, malign_message in enumerate(last_malign_messages):
+                if height > y + 3 + i:
+                    msg_str = str(malign_message.values.tolist())
+                    size = (width // 2 - 95 // 2) if (width // 2 - 95 // 2) > 0 else 0
+                    stdscr.addstr(y + 3 + i,  size, msg_str)
             
             # Refresh the screen
             stdscr.refresh()
