@@ -15,7 +15,8 @@ last_malign_messages = []
 bus = can.interface.Bus(interface="socketcan", channel="can0", bitrate=500000)
 
 # Carregamento do modelo e do scaler
-with open("./models/ocsvm-ids-scaler.pkl", "rb") as f:
+pickle_path = sys.argv[1]
+with open(pickle_path, "rb") as f:
     model, scaler = pickle.load(f)
 
 
@@ -35,15 +36,15 @@ def translate_message(message):
     time_interval = 0.0
     same_id_time_interval = 0.0
     if message.arbitration_id in known_messages_tmps:
-        time_interval = message.timestamp - known_messages_tmps[message.arbitration_id]
+        same_id_time_interval = message.timestamp - known_messages_tmps[message.arbitration_id]
         known_messages_tmps[message.arbitration_id] = message.timestamp
     else:
         known_messages_tmps[message.arbitration_id] = message.timestamp
-    same_id_time_interval = message.timestamp - last_message.timestamp
+    time_interval = message.timestamp - last_message.timestamp
 
     # converting to np array
     translated_message = pd.DataFrame(
-        [[message.arbitration_id] + decimal_data],
+        [[message.arbitration_id] + decimal_data + [time_interval, same_id_time_interval]],
         columns=[
             "id",
             "byte0",
@@ -54,6 +55,8 @@ def translate_message(message):
             "byte5",
             "byte6",
             "byte7",
+            "time_interval",
+            "same_id_time_interval",
         ],
     )
     # scaling
