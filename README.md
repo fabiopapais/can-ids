@@ -2,7 +2,7 @@
 This repository documents the development of a CAN Network IDS implemented with a machine learning approach. \
 There are valid log files acquired from a simulated CAN Network as well as fabricated malign messages. You can also find useful python scripts to help in the dataset preparation:
 ### attack_gen.py
-Generates attacking frames with the choosen technique.
+Generates attacking frames to the network 'can0' with the choosen technique.
 ```bash
 python attack_gen.py <technique: dos|fuzzy|throt|speed|accel> [duration (in seconds)] [interval (in seconds)]
 
